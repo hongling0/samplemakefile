@@ -34,11 +34,11 @@ LINK.cc=$(CXX) $(OBJS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) -o $(TA
 LINK.c=$(CC) $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) -o $(TARGET)
 LINK.ar=$(AR) $(ARFLAGS) $(TARGET) $(OBJS)
 PREPROC.cc=$(CXX) $(CXXFLAGS) $(CPPFLAG)
-PREPROC.c=$(CC)$(CFLAGS) $(CPPFLAG)
+PREPROC.c=$(CC) $(CFLAGS) $(CPPFLAG)
 SOURCES:=$(filter-out $(IGNFILE),$(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS)))))
 OBJS:=$(foreach x,$(SRCEXTS), $(addprefix $(OBJDIR),$(patsubst %$(x),%.o,$(filter %$(x),$(SOURCES)))))
 DEPS:=$(patsubst %.o,%.d,$(OBJS))
-ifdef $(filter-out $(addprefix %,$(CCEXTS)),$(SOURCES)),)
+ifeq ($(filter-out $(addprefix %,$(CCEXTS)),$(SOURCES)),)
 LINK=$(LINK.c)
 else
 LINK=$(LINK.cc)
@@ -46,11 +46,12 @@ endif
 ifeq ($(suffix $(TARGET)),.a)
 LINK=$(LINK.ar)	
 endif
-all:list $(DEPS) $(TARGET)
+all:link
 	@echo finish-------------------------------------------
-$(TARGET):$(OBJS)
+link:$(TARGET)
 	@$(MKDIR) $(@D)
 	$(LINK) $(OUTPUT_OPTION)
+$(TARGET):$(OBJS)
 list:
 	@echo TARGET:$(TARGET)
 	@echo dir  list----------------------------------------
@@ -59,6 +60,7 @@ list:
 	@for f in $(SOURCES); do echo file:$$f; done 
 	@echo list end ---------------------------------------- 
 
+ifneq ($(MAKECMDGOALS),clean)
 $(OBJDIR)%.o:%.c $(OBJDIR)%.d
 	$(COMPILE.c) $< -o $@
 $(OBJDIR)%.o:%.C $(OBJDIR)%.d
@@ -70,7 +72,6 @@ $(OBJDIR)%.o:%.cxx $(OBJDIR)%.d
 $(OBJDIR)%.o:%.cc $(OBJDIR)%.d
 	$(COMPILE.cc) $< -o $@
 
-ifneq ( $(MAKECMDGOALS),clean)
 $(OBJDIR)%.d:%.c
 	$(PREPROC.c) -MM $< -MT$(@:.d=.o) -MF$@
 $(OBJDIR)%.d:%.C
@@ -82,8 +83,8 @@ $(OBJDIR)%.d:%.cxx
 $(OBJDIR)%.d:%.cc
 	$(PREPROC.cc) -MM $< -MT$(@:.d=.o) -MF$@
 $(foreach d,$(SRCDIRS),$(shell $(MKDIR) $(OBJDIR)$(d)))
-endif
 -include $(DEPS)
+endif
 clean:
 	$(RM) $(OBJS)
 	$(RM) $(DEPS)
