@@ -1,4 +1,4 @@
-# author wanghong
+# author hong
 # date:2013-05-02
 # C&&C++
 .PHONY:all list clean
